@@ -83,12 +83,12 @@ macro_rules! err_impl {
 
 // ~
 
-#[macro_export]
-macro_rules! trace {
-    ($($t:tt)*) => (
-        workflow_log::log_impl!("{}",&format_args!($($t)*).to_string())
-    )
-}
+// #[macro_export]
+// macro_rules! trace {
+//     ($($t:tt)*) => (
+//         workflow_log::log_impl!("{}",&format_args!($($t)*).to_string())
+//     )
+// }
 
 #[macro_export]
 macro_rules! log_trace {
@@ -111,14 +111,14 @@ macro_rules! log_error {
     )
 }
 
-pub use trace;
+pub use log_trace;
 pub use log_warning;
 pub use log_error;
 
 #[cfg(not(target_arch = "bpf"))]
 pub fn trace_hex(data : &[u8]) {
     let hex = format_hex(data);
-    trace!("{}", hex);
+    log_trace!("{}", hex);
 
 }
 
