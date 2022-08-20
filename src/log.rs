@@ -75,7 +75,6 @@ cfg_if! {
     }
 }
 
-
 #[cfg(target_arch = "wasm32")]
 pub mod wasm {
     use wasm_bindgen::prelude::*;
@@ -91,77 +90,80 @@ pub mod wasm {
     }
 }
 
+pub mod impls {
+    use super::*;
 
-#[inline(always)]
-pub fn error_impl(args : &fmt::Arguments<'_>) {
-    if log_level_enabled(Level::Error) {
-        cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                workflow_log::wasm::error(&args.to_string());
-            } else if #[cfg(target_arch = "bpf")] {
-                solana_program::log::sol_log(&args.to_string());
-            } else {
-                println!("{}",args.to_string());
+    #[inline(always)]
+    pub fn error_impl(args : &fmt::Arguments<'_>) {
+        if log_level_enabled(Level::Error) {
+            cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    workflow_log::wasm::error(&args.to_string());
+                } else if #[cfg(target_arch = "bpf")] {
+                    solana_program::log::sol_log(&args.to_string());
+                } else {
+                    println!("{}",args.to_string());
+                }
             }
         }
     }
-}
 
-#[inline(always)]
-pub fn warn_impl(args : &fmt::Arguments<'_>) {
-    if log_level_enabled(Level::Warn) {
-        cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                workflow_log::wasm::warn(&args.to_string());
-            } else if #[cfg(target_arch = "bpf")] {
-                solana_program::log::sol_log(&args.to_string());
-            } else {
-                println!("{}",args.to_string());
+    #[inline(always)]
+    pub fn warn_impl(args : &fmt::Arguments<'_>) {
+        if log_level_enabled(Level::Warn) {
+            cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    workflow_log::wasm::warn(&args.to_string());
+                } else if #[cfg(target_arch = "bpf")] {
+                    solana_program::log::sol_log(&args.to_string());
+                } else {
+                    println!("{}",args.to_string());
+                }
             }
         }
     }
-}
 
-#[inline(always)]
-pub fn info_impl(args : &fmt::Arguments<'_>) {
-    if log_level_enabled(Level::Info) {
-        cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                workflow_log::wasm::log(&args.to_string());
-            } else if #[cfg(target_arch = "bpf")] {
-                solana_program::log::sol_log(&args.to_string());
-            } else {
-                println!("{}",args.to_string());
+    #[inline(always)]
+    pub fn info_impl(args : &fmt::Arguments<'_>) {
+        if log_level_enabled(Level::Info) {
+            cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    workflow_log::wasm::log(&args.to_string());
+                } else if #[cfg(target_arch = "bpf")] {
+                    solana_program::log::sol_log(&args.to_string());
+                } else {
+                    println!("{}",args.to_string());
+                }
             }
         }
     }
-}
 
-#[inline(always)]
-pub fn debug_impl(args : &fmt::Arguments<'_>) {
-    if log_level_enabled(Level::Debug) {
-        cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                workflow_log::wasm::log(&args.to_string());
-            } else if #[cfg(target_arch = "bpf")] {
-                solana_program::log::sol_log(&args.to_string());
-            } else {
-                println!("{}",args.to_string());
+    #[inline(always)]
+    pub fn debug_impl(args : &fmt::Arguments<'_>) {
+        if log_level_enabled(Level::Debug) {
+            cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    workflow_log::wasm::log(&args.to_string());
+                } else if #[cfg(target_arch = "bpf")] {
+                    solana_program::log::sol_log(&args.to_string());
+                } else {
+                    println!("{}",args.to_string());
+                }
             }
         }
     }
-}
 
-#[inline(always)]
-pub fn trace_impl(args : &fmt::Arguments<'_>) {
-    if log_level_enabled(Level::Trace) {
-        cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                workflow_log::wasm::log(&args.to_string());
-            } else if #[cfg(target_arch = "bpf")] {
-                solana_program::log::sol_log(&args.to_string());
-            } else {
-                println!("{}",args.to_string());
+    #[inline(always)]
+    pub fn trace_impl(args : &fmt::Arguments<'_>) {
+        if log_level_enabled(Level::Trace) {
+            cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    workflow_log::wasm::log(&args.to_string());
+                } else if #[cfg(target_arch = "bpf")] {
+                    solana_program::log::sol_log(&args.to_string());
+                } else {
+                    println!("{}",args.to_string());
+                }
             }
         }
     }
@@ -170,38 +172,35 @@ pub fn trace_impl(args : &fmt::Arguments<'_>) {
 #[macro_export]
 macro_rules! log_error {
     ($($t:tt)*) => (
-        workflow_log::error_impl(&format_args!($($t)*))
+        workflow_log::impls::error_impl(&format_args!($($t)*))
     )
 }
 
 #[macro_export]
 macro_rules! log_warning {
     ($($t:tt)*) => (
-        workflow_log::warn_impl(&format_args!($($t)*))
+        workflow_log::impls::warn_impl(&format_args!($($t)*))
     )
 }
-
 
 #[macro_export]
 macro_rules! log_info {
     ($($t:tt)*) => (
-        workflow_log::info_impl(&format_args!($($t)*))
+        workflow_log::impls::info_impl(&format_args!($($t)*))
     )
 }
-
 
 #[macro_export]
 macro_rules! log_debug {
     ($($t:tt)*) => (
-        workflow_log::debug_impl(&format_args!($($t)*))
+        workflow_log::impls::debug_impl(&format_args!($($t)*))
     )
 }
-
 
 #[macro_export]
 macro_rules! log_trace {
     ($($t:tt)*) => (
-        workflow_log::trace_impl(&format_args!($($t)*))
+        workflow_log::impls::trace_impl(&format_args!($($t)*))
     )
 }
 
