@@ -1,5 +1,5 @@
 use cfg_if::cfg_if;
-use std::fmt;
+use std::{fmt, sync::Arc};
 
 cfg_if! {
     if #[cfg(target_arch = "bpf")] {
@@ -7,6 +7,15 @@ cfg_if! {
     } else {
         pub use log::{ Level, LevelFilter };
     }
+}
+
+pub trait Sink {
+    fn write(&self, level : Level, args : &fmt::Arguments<'_>) -> bool;
+}
+
+struct SinkHandler {
+    #[allow(dead_code)]
+    sink : Arc<dyn Sink + Send + Sync + 'static>,
 }
 
 cfg_if! {
@@ -19,6 +28,27 @@ cfg_if! {
         pub fn set_log_level(level: LevelFilter) { 
             unsafe { LEVEL_FILTER = level };
         }
+        cfg_if! {
+            if #[cfg(feature = "sink")] {
+                static mut SINK : Option<SinkHandler> = None;
+                pub fn pipe(sink : Arc<dyn Sink + Send + Sync + 'static>) {
+                    unsafe {
+                        SINK = Some(SinkHandler { sink });
+                    }
+                }
+                #[inline(always)]
+                fn to_sink(level : Level, args : &fmt::Arguments<'_>) -> bool {
+                    let sink = unsafe { &SINK };
+                    match sink {
+                        Some(handler) => {
+                            handler.sink.write(level, args)
+                        },
+                        None => { false }
+                    }
+                }
+            }
+        }
+        
     } else {
         use std::sync::Mutex;
 
@@ -31,6 +61,25 @@ cfg_if! {
         }
         pub fn set_log_level(level: LevelFilter) {
             *LEVEL_FILTER.lock().unwrap() = level;
+        }
+        cfg_if! {
+            if #[cfg(feature = "sink")] {
+                lazy_static::lazy_static! {
+                    static ref SINK : Mutex<Option<SinkHandler>> = Mutex::new(None);
+                }
+                pub fn pipe(sink : Arc<dyn Sink + Send + Sync + 'static>) {
+                    *SINK.lock().unwrap() = Some(SinkHandler { sink });
+                }
+                #[inline(always)]
+                fn to_sink(level : Level, args : &fmt::Arguments<'_>) -> bool {
+                    match SINK.lock().unwrap().as_ref() {
+                        Some(handler) => {
+                            handler.sink.write(level, args)
+                        },
+                        None => { false }
+                    }
+                }
+            }
         }
 
         #[cfg(feature = "external-logger")]
@@ -90,12 +139,17 @@ pub mod wasm {
     }
 }
 
+
 pub mod impls {
     use super::*;
 
-    #[inline(always)]
     pub fn error_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Error) {
+            #[cfg(feature = "sink")] {
+                if to_sink(Level::Error, args) {
+                    return;
+                }
+            }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::error(&args.to_string());
@@ -108,9 +162,13 @@ pub mod impls {
         }
     }
 
-    #[inline(always)]
     pub fn warn_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Warn) {
+            #[cfg(feature = "sink")] {
+                if to_sink(Level::Warn, args) {
+                    return;
+                }
+            }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::warn(&args.to_string());
@@ -123,8 +181,12 @@ pub mod impls {
         }
     }
 
-    #[inline(always)]
     pub fn info_impl(args : &fmt::Arguments<'_>) {
+        #[cfg(feature = "sink")] {
+            if to_sink(Level::Info, args) {
+                return;
+            }
+        }
         if log_level_enabled(Level::Info) {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
@@ -138,8 +200,12 @@ pub mod impls {
         }
     }
 
-    #[inline(always)]
     pub fn debug_impl(args : &fmt::Arguments<'_>) {
+        #[cfg(feature = "sink")] {
+            if to_sink(Level::Debug, args) {
+                return;
+            }
+        }
         if log_level_enabled(Level::Debug) {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
@@ -153,8 +219,12 @@ pub mod impls {
         }
     }
 
-    #[inline(always)]
     pub fn trace_impl(args : &fmt::Arguments<'_>) {
+        #[cfg(feature = "sink")] {
+            if to_sink(Level::Trace, args) {
+                return;
+            }
+        }
         if log_level_enabled(Level::Trace) {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {

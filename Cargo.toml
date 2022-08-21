@@ -5,8 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-default = []
-full = ["external-logger"]
+default = ["sink"]
+full = ["external-logger","sink"]
+sink = []
 # ignored for BPF target
 external-logger = []
 
