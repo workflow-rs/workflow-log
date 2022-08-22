@@ -182,12 +182,12 @@ pub mod impls {
     }
 
     pub fn info_impl(args : &fmt::Arguments<'_>) {
-        #[cfg(feature = "sink")] {
-            if to_sink(Level::Info, args) {
-                return;
-            }
-        }
         if log_level_enabled(Level::Info) {
+            #[cfg(feature = "sink")] {
+                if to_sink(Level::Info, args) {
+                    return;
+                }
+            }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::log(&args.to_string());
@@ -201,12 +201,12 @@ pub mod impls {
     }
 
     pub fn debug_impl(args : &fmt::Arguments<'_>) {
-        #[cfg(feature = "sink")] {
-            if to_sink(Level::Debug, args) {
-                return;
-            }
-        }
         if log_level_enabled(Level::Debug) {
+            #[cfg(feature = "sink")] {
+                if to_sink(Level::Debug, args) {
+                    return;
+                }
+            }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::log(&args.to_string());
@@ -220,12 +220,12 @@ pub mod impls {
     }
 
     pub fn trace_impl(args : &fmt::Arguments<'_>) {
-        #[cfg(feature = "sink")] {
-            if to_sink(Level::Trace, args) {
-                return;
-            }
-        }
         if log_level_enabled(Level::Trace) {
+            #[cfg(feature = "sink")] {
+                if to_sink(Level::Trace, args) {
+                    return;
+                }
+            }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::log(&args.to_string());
