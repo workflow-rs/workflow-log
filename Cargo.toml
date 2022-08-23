@@ -12,13 +12,13 @@ sink = []
 external-logger = []
 
 [dependencies]
+cfg-if = "1.0.0"
 
 [target.'cfg(not(target_arch = "bpf"))'.dependencies]
 hexplay = "0.2.1"
 wasm-bindgen = { version = "0.2.79" }
 console = "0.15.0"
 log = "0.4.17"
-cfg-if = "1.0.0"
 lazy_static = "1.4.0"
 
 [target.'cfg(target_arch = "bpf")'.dependencies]
