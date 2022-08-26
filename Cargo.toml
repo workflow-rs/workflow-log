@@ -20,6 +20,7 @@ wasm-bindgen = { version = "0.2.79" }
 console = "0.15.0"
 log = "0.4.17"
 lazy_static = "1.4.0"
+downcast = "0.11.0"
 
 [target.'cfg(target_arch = "bpf")'.dependencies]
 solana-program = {path = "../solana/sdk/program"}

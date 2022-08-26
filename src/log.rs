@@ -6,20 +6,32 @@ cfg_if! {
         pub use workflow_log::levels::{ Level, LevelFilter };
     } else {
         pub use log::{ Level, LevelFilter };
+        use downcast::{ downcast_sync, AnySync };
+
+        pub trait Sink : AnySync {
+            fn write(&self, level : Level, args : &fmt::Arguments<'_>) -> bool;
+        }
+        
+        struct SinkHandler {
+            // #[allow(dead_code)]
+            sink : Arc<dyn Sink>, // + Send + Sync + 'static>,
+        }
+
+        downcast_sync!(dyn Sink);
     }
 }
 
-pub trait Sink {
-    fn write(&self, level : Level, args : &fmt::Arguments<'_>) -> bool;
-}
-
-struct SinkHandler {
-    #[allow(dead_code)]
-    sink : Arc<dyn Sink + Send + Sync + 'static>,
-}
-
 cfg_if! {
-    if #[cfg(any(target_arch = "wasm32", target_arch = "bpf"))] {
+    if #[cfg(target_arch = "bpf")] {
+        static mut LEVEL_FILTER : LevelFilter = LevelFilter::Trace;
+        #[inline(always)]
+        pub fn log_level_enabled(level: Level) -> bool { 
+            unsafe { LEVEL_FILTER >= level } 
+        }
+        pub fn set_log_level(level: LevelFilter) { 
+            unsafe { LEVEL_FILTER = level };
+        }
+    } else if #[cfg(target_arch = "wasm32")] {
         static mut LEVEL_FILTER : LevelFilter = LevelFilter::Trace;
         #[inline(always)]
         pub fn log_level_enabled(level: Level) -> bool { 
@@ -31,10 +43,13 @@ cfg_if! {
         cfg_if! {
             if #[cfg(feature = "sink")] {
                 static mut SINK : Option<SinkHandler> = None;
-                pub fn pipe(sink : Arc<dyn Sink + Send + Sync + 'static>) {
-                    unsafe {
-                        SINK = Some(SinkHandler { sink });
+                // pub fn pipe(sink : Arc<dyn Sink + Send + Sync + 'static>) {
+                pub fn pipe(sink : Option<Arc<dyn Sink>>) {
+                    match sink {
+                        Some(sink) => { unsafe { SINK = Some(SinkHandler { sink }); } },
+                        None => { unsafe { SINK = None; } }
                     }
+                    
                 }
                 #[inline(always)]
                 fn to_sink(level : Level, args : &fmt::Arguments<'_>) -> bool {
@@ -67,8 +82,13 @@ cfg_if! {
                 lazy_static::lazy_static! {
                     static ref SINK : Mutex<Option<SinkHandler>> = Mutex::new(None);
                 }
-                pub fn pipe(sink : Arc<dyn Sink + Send + Sync + 'static>) {
-                    *SINK.lock().unwrap() = Some(SinkHandler { sink });
+                // pub fn pipe(sink : Option<Arc<dyn Sink + Send + Sync + 'static>>) {
+                pub fn pipe(sink : Option<Arc<dyn Sink>>) {
+                    match sink {
+                        Some(sink) => { *SINK.lock().unwrap() = Some(SinkHandler { sink }); },
+                        None => { *SINK.lock().unwrap() = None; }
+                    }
+                    
                 }
                 #[inline(always)]
                 fn to_sink(level : Level, args : &fmt::Arguments<'_>) -> bool {
