@@ -1,10 +1,11 @@
 use cfg_if::cfg_if;
-use std::{fmt, sync::Arc};
+use std::fmt;
 
 cfg_if! {
     if #[cfg(target_arch = "bpf")] {
         pub use workflow_log::levels::{ Level, LevelFilter };
     } else {
+        use std::sync::Arc;
         pub use log::{ Level, LevelFilter };
         use downcast::{ downcast_sync, AnySync };
 
@@ -165,7 +166,7 @@ pub mod impls {
 
     pub fn error_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Error) {
-            #[cfg(feature = "sink")] {
+            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
                 if to_sink(Level::Error, args) {
                     return;
                 }
@@ -184,7 +185,7 @@ pub mod impls {
 
     pub fn warn_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Warn) {
-            #[cfg(feature = "sink")] {
+            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
                 if to_sink(Level::Warn, args) {
                     return;
                 }
@@ -203,7 +204,7 @@ pub mod impls {
 
     pub fn info_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Info) {
-            #[cfg(feature = "sink")] {
+            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
                 if to_sink(Level::Info, args) {
                     return;
                 }
@@ -222,7 +223,7 @@ pub mod impls {
 
     pub fn debug_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Debug) {
-            #[cfg(feature = "sink")] {
+            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
                 if to_sink(Level::Debug, args) {
                     return;
                 }
@@ -241,7 +242,7 @@ pub mod impls {
 
     pub fn trace_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Trace) {
-            #[cfg(feature = "sink")] {
+            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
                 if to_sink(Level::Trace, args) {
                     return;
                 }
