@@ -50,7 +50,6 @@ cfg_if! {
                         Some(sink) => { unsafe { SINK = Some(SinkHandler { sink }); } },
                         None => { unsafe { SINK = None; } }
                     }
-                    
                 }
                 #[inline(always)]
                 fn to_sink(level : Level, args : &fmt::Arguments<'_>) -> bool {
