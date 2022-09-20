@@ -1,4 +1,4 @@
-# WORKFLOW-LOG
+## WORKFLOW-LOG
 
 Part of the [WORKFLOW-RS](https://github.com/workflow-rs) application framework.
 
@@ -8,7 +8,7 @@ Application logging functionality
 
 Platforms supported: Native, WASM (browser), BPF
 
-# Features:
+## Features
 
 * Log output functions that functions uniformly on supported platforms.
   * **Native** uses `stdout`
