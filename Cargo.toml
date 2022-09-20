@@ -2,11 +2,18 @@
 name = "workflow-log"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/workflow-rs/workflow-log"
+keywords = ["wasm","framework","log","logger","bpf"]
+categories = []
+exclude = ["/.*", "/test"]
+description = """
+Log macros & utilities abstracting native & in-browser logging interfaces
+"""
 
 [lib]
 crate-type = ["cdylib", "lib"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 default = ["sink"]
 full = ["external-logger","sink"]
