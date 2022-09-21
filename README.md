@@ -6,7 +6,11 @@ Part of the [WORKFLOW-RS](https://github.com/workflow-rs) application framework.
 
 Application logging functionality
 
-Platforms supported: Native, WASM (browser), BPF
+[![Crates.io](https://img.shields.io/crates/l/workflow-log.svg?maxAge=2592000)](https://crates.io/crates/workflow-log)
+[![Crates.io](https://img.shields.io/crates/v/workflow-log.svg?maxAge=2592000)](https://crates.io/crates/workflow-log)
+![platform](https://img.shields.io/badge/platform-Native-informational)
+![platform](https://img.shields.io/badge/platform-Web%20%28wasm32%29-informational)
+![platform](https://img.shields.io/badge/platform-BPF-informational)
 
 ## Features
 
