@@ -2,7 +2,7 @@ use cfg_if::cfg_if;
 use std::fmt;
 
 cfg_if! {
-    if #[cfg(target_arch = "bpf")] {
+    if #[cfg(target_os = "solana")] {
         pub use workflow_log::levels::{ Level, LevelFilter };
     } else {
         use std::sync::Arc;
@@ -23,7 +23,7 @@ cfg_if! {
 }
 
 cfg_if! {
-    if #[cfg(target_arch = "bpf")] {
+    if #[cfg(target_os = "solana")] {
         static mut LEVEL_FILTER : LevelFilter = LevelFilter::Trace;
         #[inline(always)]
         pub fn log_level_enabled(level: Level) -> bool { 
@@ -165,7 +165,7 @@ pub mod impls {
 
     pub fn error_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Error) {
-            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
+            #[cfg(all(not(target_os = "solana"),feature = "sink"))] {
                 if to_sink(Level::Error, args) {
                     return;
                 }
@@ -173,7 +173,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::error(&args.to_string());
-                } else if #[cfg(target_arch = "bpf")] {
+                } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{}",args.to_string());
@@ -184,7 +184,7 @@ pub mod impls {
 
     pub fn warn_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Warn) {
-            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
+            #[cfg(all(not(target_os = "solana"),feature = "sink"))] {
                 if to_sink(Level::Warn, args) {
                     return;
                 }
@@ -192,7 +192,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::warn(&args.to_string());
-                } else if #[cfg(target_arch = "bpf")] {
+                } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{}",args.to_string());
@@ -203,7 +203,7 @@ pub mod impls {
 
     pub fn info_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Info) {
-            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
+            #[cfg(all(not(target_os = "solana"),feature = "sink"))] {
                 if to_sink(Level::Info, args) {
                     return;
                 }
@@ -211,7 +211,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::log(&args.to_string());
-                } else if #[cfg(target_arch = "bpf")] {
+                } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{}",args.to_string());
@@ -222,7 +222,7 @@ pub mod impls {
 
     pub fn debug_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Debug) {
-            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
+            #[cfg(all(not(target_os = "solana"),feature = "sink"))] {
                 if to_sink(Level::Debug, args) {
                     return;
                 }
@@ -230,7 +230,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::log(&args.to_string());
-                } else if #[cfg(target_arch = "bpf")] {
+                } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{}",args.to_string());
@@ -241,7 +241,7 @@ pub mod impls {
 
     pub fn trace_impl(args : &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Trace) {
-            #[cfg(all(not(target_arch = "bpf"),feature = "sink"))] {
+            #[cfg(all(not(target_os = "solana"),feature = "sink"))] {
                 if to_sink(Level::Trace, args) {
                     return;
                 }
@@ -249,7 +249,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm::log(&args.to_string());
-                } else if #[cfg(target_arch = "bpf")] {
+                } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{}",args.to_string());
@@ -300,14 +300,14 @@ pub use log_info;
 pub use log_debug;
 pub use log_trace;
 
-#[cfg(not(target_arch = "bpf"))]
+#[cfg(not(target_os = "solana"))]
 pub fn trace_hex(data : &[u8]) {
     let hex = format_hex(data);
     log_trace!("{}", hex);
 
 }
 
-#[cfg(not(target_arch = "bpf"))]
+#[cfg(not(target_os = "solana"))]
 pub fn format_hex(data : &[u8]) -> String {
     let view = hexplay::HexViewBuilder::new(data)
     .address_offset(0)

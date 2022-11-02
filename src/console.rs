@@ -1,7 +1,7 @@
-#[cfg(not(target_arch = "bpf"))]
+#[cfg(not(target_os = "solana"))]
 pub use console::style;
 
-#[cfg(target_arch = "bpf")]
+#[cfg(target_os = "solana")]
 mod console_style {
     use std::fmt::*;
 
@@ -34,13 +34,13 @@ mod console_style {
         }    
     }
 
-    // #[cfg(target_arch = "bpf")]
+    // #[cfg(target_os = "solana")]
     // impl<'t> Into<&'t str> for ConsoleStyle<'t> {
     //     fn into(self) -> &'t str { self.text }
     // }
 }
 
-#[cfg(target_arch = "bpf")]
+#[cfg(target_os = "solana")]
 pub fn style<'t>(text: &'t str) -> console_style::ConsoleStyle<'t> {
     console_style::ConsoleStyle(text)
 }
