@@ -24,13 +24,9 @@ cfg_if! {
 
 cfg_if! {
     if #[cfg(target_os = "solana")] {
-        static mut LEVEL_FILTER : LevelFilter = LevelFilter::Trace;
         #[inline(always)]
-        pub fn log_level_enabled(level: Level) -> bool { 
-            unsafe { LEVEL_FILTER >= level } 
-        }
-        pub fn set_log_level(level: LevelFilter) { 
-            unsafe { LEVEL_FILTER = level };
+        pub fn log_level_enabled(_level: Level) -> bool { 
+            true
         }
     } else if #[cfg(target_arch = "wasm32")] {
         static mut LEVEL_FILTER : LevelFilter = LevelFilter::Trace;
