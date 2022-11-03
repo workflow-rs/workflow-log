@@ -27,6 +27,7 @@ cfg-if = "1.0.0"
 # [target.'cfg(not(target_os = "solana"))'.dependencies]
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 hexplay = "0.2.1"
+termcolor="0.3.6"
 wasm-bindgen = { version = "0.2.79" }
 console = "0.15.0"
 log = "0.4.17"
