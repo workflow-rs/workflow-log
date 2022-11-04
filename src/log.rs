@@ -378,3 +378,76 @@ pub fn format_hex_with_colors<'a>(data : &'a[u8], colors:Vec<(&'a str, usize)>) 
 
     ColorHexView::new(view_builder, colors)
 }
+#[cfg(not(target_os = "solana"))]
+pub mod color_log{
+    pub use super::*;
+
+    pub enum DataType<'a>{
+        Pubkey,
+        Pubkey2,
+        U8,
+        U16,
+        U32,
+        U64,
+        U128,
+        ContainerType(Length),
+        SegmentIndex(Length),
+        SegmentOffset(Length),
+        SegmentSize(Length),
+        SegmentMeta(Length),
+        Segment(Length),
+        Custom(Length, Color<'a>)
+    }
+
+    pub type Index = usize;
+    pub type Length = usize;
+    pub type Color<'a> = &'a str;
+    type Result<T> = std::result::Result<T, String>;
+
+    pub trait ColoLogTrace{
+        
+        fn log_data(&self)->Vec<u8>;
+        fn log_index_and_type<'a>(&self)->Option<Vec<(Index, DataType<'a>)>>{
+            None
+        }
+
+        fn log_trace(&self)->Result<bool>{
+            let data_vec = self.log_data();
+            let mut view = format_hex_with_colors(&data_vec, vec![]);
+            if let Some(index_type_list) = self.log_index_and_type(){
+                let mut colors = Vec::new();
+                for (index, data_type) in index_type_list{
+                    let (size, color) = match data_type{
+                        DataType::Pubkey=>(32, "2"),
+                        DataType::Pubkey2=>(32, "3"),
+                        DataType::ContainerType(size) => (size, "8"),
+                        DataType::SegmentIndex(size) => (size, "9"),
+                        DataType::SegmentOffset(size) => (size, "10"),
+                        DataType::SegmentSize(size) => (size, "11"),
+                        DataType::SegmentMeta(size) => (size, "12"),
+                        DataType::Segment(size) => (size, "13"),
+                        DataType::Custom(size, color) => (size, color),
+                        DataType::U8=>(8, "green"),
+                        DataType::U16=>(16, "blue"),
+                        DataType::U32=>(32, "cyan"),
+                        DataType::U64=>(64, "magenta"),
+                        DataType::U128=>(128, "yellow"),
+                    };
+
+                    colors.push((color, index..index+size));
+                }
+                view = view.add_colors_with_range(colors);
+            }
+
+            if let Err(_) = view.try_print(){
+                trace_hex(&data_vec);
+                return Ok(false);
+            }
+            Ok(true)
+        }
+    }
+    
+}
+
+#[cfg(not(target_os = "solana"))]
+pub use color_log::*;
