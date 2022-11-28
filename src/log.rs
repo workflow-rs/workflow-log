@@ -8,6 +8,63 @@ cfg_if! {
         use std::sync::Arc;
         pub use log::{ Level, LevelFilter };
         use downcast::{ downcast_sync, AnySync };
+        pub use hexplay::{self, HexViewBuilder};
+        pub use termcolor::Buffer;
+        //use core::ops::Range;
+
+        pub struct ColorHexView<'a>{
+            pub builder: HexViewBuilder<'a>,
+            pub color_start: usize
+        }
+        impl<'a> ColorHexView<'a>{
+            pub fn new(builder:HexViewBuilder<'a>, colors:Vec<(&'a str, usize)>)->Self{
+                Self{
+                    builder,
+                    color_start:0
+                }.add_colors(colors)
+            }
+
+            pub fn add_colors(mut self, colors:Vec<(&'a str, usize)>)->Self{
+                let mut builder = self.builder;
+                for (color, len) in colors{
+                    let end = self.color_start+len;
+                    let range = self.color_start..end;
+                    self.color_start = end;
+                    builder = builder.add_color(color, range);
+                }
+                self.builder = builder;
+                self
+            }
+
+            pub fn add_colors_with_range(mut self, colors:Vec<(&'a str, std::ops::Range<usize>)>)->Self{
+                let mut builder = self.builder;
+                for (color, range) in colors{
+                    builder = builder.add_color(color, range);
+                }
+                self.builder = builder;
+                self
+            }
+
+            pub fn try_print(self)->std::result::Result<(), String>{
+                let mut buf = Buffer::ansi();
+                match self.builder.finish().fmt(&mut buf){
+                    Ok(()) => {
+                        match String::from_utf8(buf.as_slice().to_vec()){
+                            Ok(str)=>{
+                                log_trace!("{}", str);
+                            }
+                            Err(_)=>{
+                                return Err("Unable to convert HexView to string".to_string());
+                            }
+                        }
+                    },
+                    Err(_) => {
+                        return Err("Unable to format HexView".to_string());
+                    }
+                }
+                Ok(())
+            }
+        }
 
         pub trait Sink : AnySync {
             fn write(&self, level : Level, args : &fmt::Arguments<'_>) -> bool;
@@ -312,3 +369,85 @@ pub fn format_hex(data : &[u8]) -> String {
 
     format!("{}",view).into()
 }
+
+#[cfg(not(target_os = "solana"))]
+pub fn format_hex_with_colors<'a>(data : &'a[u8], colors:Vec<(&'a str, usize)>) -> ColorHexView {
+    let view_builder = hexplay::HexViewBuilder::new(data)
+        .address_offset(0)
+        .row_width(16);
+
+    ColorHexView::new(view_builder, colors)
+}
+#[cfg(not(target_os = "solana"))]
+pub mod color_log{
+    pub use super::*;
+
+    pub enum DataType<'a>{
+        Pubkey,
+        Pubkey2,
+        U8,
+        U16,
+        U32,
+        U64,
+        U128,
+        ContainerType(Length),
+        SegmentIndex(Length),
+        SegmentOffset(Length),
+        SegmentSize(Length),
+        SegmentMeta(Length),
+        Segment(Length),
+        Custom(Length, Color<'a>)
+    }
+
+    pub type Index = usize;
+    pub type Length = usize;
+    pub type Color<'a> = &'a str;
+    type Result<T> = std::result::Result<T, String>;
+
+    pub trait ColoLogTrace{
+        
+        fn log_data(&self)->Vec<u8>;
+        fn log_index_and_type<'a>(&self)->Option<Vec<(Index, DataType<'a>)>>{
+            None
+        }
+
+        fn log_trace(&self)->Result<bool>{
+            let data_vec = self.log_data();
+            let mut view = format_hex_with_colors(&data_vec, vec![]);
+            if let Some(index_type_list) = self.log_index_and_type(){
+                let mut colors = Vec::new();
+                for (index, data_type) in index_type_list{
+                    let (size, color) = match data_type{
+                        DataType::Pubkey=>(32, "2"),
+                        DataType::Pubkey2=>(32, "3"),
+                        DataType::ContainerType(size) => (size, "8"),
+                        DataType::SegmentIndex(size) => (size, "9"),
+                        DataType::SegmentOffset(size) => (size, "10"),
+                        DataType::SegmentSize(size) => (size, "11"),
+                        DataType::SegmentMeta(size) => (size, "12"),
+                        DataType::Segment(size) => (size, "13"),
+                        DataType::Custom(size, color) => (size, color),
+                        DataType::U8=>(8, "green"),
+                        DataType::U16=>(16, "blue"),
+                        DataType::U32=>(32, "cyan"),
+                        DataType::U64=>(64, "magenta"),
+                        DataType::U128=>(128, "yellow"),
+                    };
+
+                    colors.push((color, index..index+size));
+                }
+                view = view.add_colors_with_range(colors);
+            }
+
+            if let Err(_) = view.try_print(){
+                trace_hex(&data_vec);
+                return Ok(false);
+            }
+            Ok(true)
+        }
+    }
+    
+}
+
+#[cfg(not(target_os = "solana"))]
+pub use color_log::*;
