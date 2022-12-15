@@ -371,7 +371,7 @@ pub fn format_hex(data : &[u8]) -> String {
 }
 
 #[cfg(not(target_os = "solana"))]
-pub fn format_hex_with_colors<'a>(data : &'a[u8], colors:Vec<(&'a str, usize)>) -> ColorHexView {
+pub fn format_hex_with_colors<'a>(data : &'a[u8], colors:Vec<(&'a str, usize)>) -> ColorHexView<'a> {
     let view_builder = hexplay::HexViewBuilder::new(data)
         .address_offset(0)
         .row_width(16);
