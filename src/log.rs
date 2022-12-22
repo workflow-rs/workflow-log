@@ -66,6 +66,8 @@ cfg_if! {
             }
         }
 
+        /// A log sink trait that can be installed into the log subsystem using the [`pipe`] 
+        /// function and will receive all log messages.
         pub trait Sink : AnySync {
             fn write(&self, level : Level, args : &fmt::Arguments<'_>) -> bool;
         }
@@ -124,9 +126,12 @@ cfg_if! {
             static ref LEVEL_FILTER : Mutex<LevelFilter> = Mutex::new(LevelFilter::Trace);
         }
         #[inline(always)]
+        /// Returns true if the current log level is below the
+        /// currently set [`LevelFilter`]
         pub fn log_level_enabled(level: Level) -> bool {
             *LEVEL_FILTER.lock().unwrap() >= level
         }
+        /// Enable filtering of log messages using the [`LevelFilter`]
         pub fn set_log_level(level: LevelFilter) {
             *LEVEL_FILTER.lock().unwrap() = level;
         }
@@ -136,6 +141,9 @@ cfg_if! {
                     static ref SINK : Mutex<Option<SinkHandler>> = Mutex::new(None);
                 }
                 // pub fn pipe(sink : Option<Arc<dyn Sink + Send + Sync + 'static>>) {
+                /// Receives an Option with an `Arc`ed [`Sink`] trait reference
+                /// and installs it as a log sink / receiver.
+                /// The sink can be later disabled by invoking `pipe(None)`
                 pub fn pipe(sink : Option<Arc<dyn Sink>>) {
                     match sink {
                         Some(sink) => { *SINK.lock().unwrap() = Some(SinkHandler { sink }); },
@@ -312,6 +320,7 @@ pub mod impls {
     }
 }
 
+/// Format and log message with [`Level::Error`]
 #[macro_export]
 macro_rules! log_error {
     ($($t:tt)*) => (
@@ -319,6 +328,7 @@ macro_rules! log_error {
     )
 }
 
+/// Format and log message with [`Level::Warn`]
 #[macro_export]
 macro_rules! log_warning {
     ($($t:tt)*) => (
@@ -326,6 +336,7 @@ macro_rules! log_warning {
     )
 }
 
+/// Format and log message with [`Level::Info`]
 #[macro_export]
 macro_rules! log_info {
     ($($t:tt)*) => (
@@ -333,6 +344,7 @@ macro_rules! log_info {
     )
 }
 
+/// Format and log message with [`Level::Debug`]
 #[macro_export]
 macro_rules! log_debug {
     ($($t:tt)*) => (
@@ -340,6 +352,7 @@ macro_rules! log_debug {
     )
 }
 
+/// Format and log message with [`Level::Trace`]
 #[macro_export]
 macro_rules! log_trace {
     ($($t:tt)*) => (
@@ -347,19 +360,22 @@ macro_rules! log_trace {
     )
 }
 
-pub use log_error;
-pub use log_warning;
-pub use log_info;
-pub use log_debug;
-pub use log_trace;
+use log_error;
+use log_warning;
+use log_info;
+use log_debug;
+use log_trace;
 
+/// Prints (using [`log_trace`]) a data slice
+/// formatted as a hex data dump.
 #[cfg(not(target_os = "solana"))]
 pub fn trace_hex(data : &[u8]) {
     let hex = format_hex(data);
     log_trace!("{}", hex);
-
 }
 
+/// Returns a string formatted as a hex data dump
+/// of the supplied slice argument.
 #[cfg(not(target_os = "solana"))]
 pub fn format_hex(data : &[u8]) -> String {
     let view = hexplay::HexViewBuilder::new(data)
@@ -370,6 +386,7 @@ pub fn format_hex(data : &[u8]) -> String {
     format!("{}",view).into()
 }
 
+/// Formats a hex data dump to contain color ranges
 #[cfg(not(target_os = "solana"))]
 pub fn format_hex_with_colors<'a>(data : &'a[u8], colors:Vec<(&'a str, usize)>) -> ColorHexView<'a> {
     let view_builder = hexplay::HexViewBuilder::new(data)
